@@ -8,58 +8,28 @@
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Public+Sans:wght@400;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css" />
   
-  <!-- CSS wrapped properly in style tags -->
   <style>
+    /* Fixed container locked safely in the bottom-left corner */
     .pixel-dog-container {
-      position: absolute;
-      bottom: 20px; 
-      left: 20px;
-      z-index: 10;
-      image-rendering: pixelated;
+      position: fixed;
+      bottom: 15px;
+      left: 15px;
+      z-index: 100;
+      pointer-events: none;
     }
 
+    /* Crisp pixel rendering for the SVG */
     .pixel-dog {
-      position: relative;
-      width: 48px;
-      height: 24px;
-      transform: scale(3) scaleX(-1); 
-      transform-origin: bottom left;
+      width: 144px;
+      height: 72px;
+      shape-rendering: crispEdges;
     }
 
-    .pixel-dog::before {
-      content: "";
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      width: 4px;
-      height: 4px;
-      background: transparent;
-      box-shadow: 
-        /* Body */
-        12px -8px 0 0 #c68a4c, 16px -8px 0 0 #c68a4c, 20px -8px 0 0 #c68a4c, 24px -8px 0 0 #c68a4c, 28px -8px 0 0 #c68a4c, 32px -8px 0 0 #c68a4c,
-        12px -12px 0 0 #c68a4c, 16px -12px 0 0 #c68a4c, 20px -12px 0 0 #c68a4c, 24px -12px 0 0 #c68a4c, 28px -12px 0 0 #c68a4c, 32px -12px 0 0 #c68a4c,
-        /* Head */
-        4px -16px 0 0 #c68a4c, 8px -16px 0 0 #c68a4c, 12px -16px 0 0 #c68a4c,
-        4px -20px 0 0 #c68a4c, 8px -20px 0 0 #c68a4c,
-        /* Snout */
-        0px -16px 0 0 #333333,
-        /* Ears */
-        8px -24px 0 0 #8b5a2b, 12px -24px 0 0 #8b5a2b,
-        /* Tail */
-        36px -16px 0 0 #c68a4c, 40px -20px 0 0 #c68a4c,
-        /* Legs */
-        12px -4px 0 0 #333333, 16px -4px 0 0 #333333,
-        28px -4px 0 0 #333333, 32px -4px 0 0 #333333;
-    }
-
-    /* Mobile responsive safeguard */
+    /* Mobile scale adjustment */
     @media (max-width: 600px) {
       .pixel-dog {
-        transform: scale(1.5) scaleX(-1);
-      }
-      .pixel-dog-container {
-        position: relative;
-        margin-top: 20px;
+        width: 96px;
+        height: 48px;
       }
     }
   </style>
@@ -116,9 +86,24 @@
     Built with Connie in mind. 🐾
   </footer>
 
-  <!-- Pixel Sausage Dog Element -->
+  <!-- Pixel Sausage Dog Element (SVG) -->
   <div class="pixel-dog-container">
-    <div class="pixel-dog"></div>
+    <svg class="pixel-dog" viewBox="0 0 24 12" xmlns="http://www.w3.org/2000/svg">
+      <!-- Tail -->
+      <rect x="2" y="3" width="2" height="2" fill="#c68a4c"/>
+      <rect x="1" y="2" width="1" height="1" fill="#c68a4c"/>
+      <!-- Body -->
+      <rect x="4" y="4" width="12" height="3" fill="#c68a4c"/>
+      <rect x="4" y="3" width="12" height="1" fill="#c68a4c"/>
+      <!-- Legs -->
+      <rect x="5" y="7" width="2" height="2" fill="#333333"/>
+      <rect x="13" y="7" width="2" height="2" fill="#333333"/>
+      <!-- Head -->
+      <rect x="15" y="2" width="4" height="3" fill="#c68a4c"/>
+      <rect x="16" y="1" width="2" height="1" fill="#8b5a2b"/>
+      <!-- Snout & Nose -->
+      <rect x="19" y="3" width="2" height="1" fill="#333333"/>
+    </svg>
   </div>
 
   <script src="js/shared.js"></script>
