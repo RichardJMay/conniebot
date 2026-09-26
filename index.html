@@ -7,17 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Public+Sans:wght@400;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css" />
-  <style>
-    /* Mario-style retro pixel sausage dog container */
-    .pixel-dog-container {
-      position: fixed;
-      bottom: 20px; 
-      left: 20px;
-      z-index: 1000;
-      image-rendering: pixelated;
-    }
-
-    .pixel-dog {
+  .pixel-dog {
       position: relative;
       width: 48px;
       height: 24px;
@@ -25,34 +15,6 @@
       transform: scale(5) scaleX(-1); 
       transform-origin: bottom right;
     }
-
-    /* Pixel art blocks using box-shadow */
-    .pixel-dog::before {
-      content: "";
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      width: 4px;
-      height: 4px;
-      background: transparent;
-      box-shadow: 
-        /* Body */
-        12px -8px 0 0 #c68a4c, 16px -8px 0 0 #c68a4c, 20px -8px 0 0 #c68a4c, 24px -8px 0 0 #c68a4c, 28px -8px 0 0 #c68a4c, 32px -8px 0 0 #c68a4c,
-        12px -12px 0 0 #c68a4c, 16px -12px 0 0 #c68a4c, 20px -12px 0 0 #c68a4c, 24px -12px 0 0 #c68a4c, 28px -12px 0 0 #c68a4c, 32px -12px 0 0 #c68a4c,
-        /* Head */
-        4px -16px 0 0 #c68a4c, 8px -16px 0 0 #c68a4c, 12px -16px 0 0 #c68a4c,
-        4px -20px 0 0 #c68a4c, 8px -20px 0 0 #c68a4c,
-        /* Snout */
-        0px -16px 0 0 #333333,
-        /* Ears */
-        8px -24px 0 0 #8b5a2b, 12px -24px 0 0 #8b5a2b,
-        /* Tail */
-        36px -16px 0 0 #c68a4c, 40px -20px 0 0 #c68a4c,
-        /* Legs */
-        12px -4px 0 0 #333333, 16px -4px 0 0 #333333,
-        28px -4px 0 0 #333333, 32px -4px 0 0 #333333;
-    }
-  </style>
 </head>
 <body>
 
