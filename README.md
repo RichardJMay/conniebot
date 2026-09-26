@@ -4,22 +4,6 @@ A static, multi-page teaching site using operant conditioning principles,
 themed around a pixel-art sausage dog (Connie). See `PROJECT-NOTES.md` for
 the full design brief.
 
-## Folder structure
-
-```
-connie-site/
-├── index.html              ← landing page, links to all modules
-├── connie.html              ← tribute page about the real Connie
-├── css/
-│   └── style.css            ← shared NES/Mario-style palette & layout
-├── js/
-│   └── shared.js             ← treats counter (localStorage) + chiptune chime player
-├── modules/
-│   ├── contingencies.html    ← working prototype (Lecture 1)
-│   └── shaping.html          ← (to be built)
-└── assets/
-    └── sprites/               ← put Connie sprite images here once ready
-```
 
 ## Running it locally
 
