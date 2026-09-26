@@ -221,3 +221,7 @@ footer {
   font-size: 0.85rem;
   text-align: center;
 }
+
+[data-treats-counter-wrap] {
+  display: none !important;
+}
