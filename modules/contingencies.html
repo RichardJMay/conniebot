@@ -10,11 +10,12 @@
   <style>
     :root { --connie-dark: #A85F27; }
 
-    /* Fix mobile title overflow */
-    h1 {
-      word-wrap: break-word;
-      overflow-wrap: break-word;
-      hyphens: auto;
+    /* Keep module titles on a single line and scale gracefully on mobile */
+    .card h1 {
+      font-size: clamp(1rem, 4vw, 1.5rem);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     #game-area {
@@ -202,7 +203,7 @@
 
   <main>
     <section class="card">
-      <h1>Module 1: Contingencies</h1>
+      <h1>Module 1: Contingency</h1>
       <p>
         Connie loves cheese 🧀 more than almost anything. Press the Bark
         button (or hit spacebar) to get her barking. You will have to press multiple times to get her to bark, the number of presses will depend on how hungry she is.
