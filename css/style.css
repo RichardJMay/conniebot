@@ -1,0 +1,223 @@
+/* ==========================================================================
+   Connie's Contingencies — shared site styles
+   Palette + type inspired by NES-era platformers (bright, saturated,
+   black-outlined), not Game Boy monochrome.
+   ========================================================================== */
+
+:root {
+  /* Core palette — named, deliberate, not defaults */
+  --sky:        #4AA5E8;   /* bright cartoon sky blue, main background */
+  --grass:      #4CB944;   /* saturated green, ground / secondary panels */
+  --brick:      #C1440E;   /* warm brick red, headers / accents */
+  --sun:        #FFC93C;   /* golden yellow, highlights / treats */
+  --connie-tan: #C97B3D;   /* Connie's coat colour, warm toy-like tan */
+  --ink:        #1B1B1B;   /* near-black outline colour, not pure #000 */
+  --paper:      #FFF8E7;   /* warm off-white for text panels */
+
+  --font-display: "Press Start 2P", monospace;
+  --font-body: "Public Sans", "Segoe UI", system-ui, sans-serif;
+
+  --pixel-border: 4px solid var(--ink);
+  --shadow-hard: 4px 4px 0 var(--ink);
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--sky);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 18px;
+  line-height: 1.5;
+}
+
+/* Textured ground strip along the bottom of every page, Mario-style */
+body::after {
+  content: "";
+  display: block;
+  position: fixed;
+  left: 0; right: 0; bottom: 0;
+  height: 28px;
+  background: repeating-linear-gradient(
+    90deg,
+    var(--grass) 0 24px,
+    #3E9E38 24px 28px
+  );
+  border-top: var(--pixel-border);
+  z-index: 0;
+}
+
+a { color: var(--brick); }
+a:visited { color: var(--brick); }
+
+h1, h2, h3, .display {
+  font-family: var(--font-display);
+  line-height: 1.4;
+  letter-spacing: 0.5px;
+}
+
+h1 { font-size: 1.6rem; }
+h2 { font-size: 1.1rem; }
+
+.site-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.5rem;
+  background: var(--paper);
+  border-bottom: var(--pixel-border);
+  position: relative;
+  z-index: 1;
+}
+
+.site-header .brand {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  text-decoration: none;
+  color: var(--ink);
+}
+
+.brand-title {
+  font-family: var(--font-display);
+  font-size: 1rem;
+}
+
+.site-nav a {
+  margin-left: 1.25rem;
+  text-decoration: none;
+  font-weight: 600;
+  color: var(--ink);
+  border-bottom: 3px solid transparent;
+  padding-bottom: 2px;
+}
+
+.site-nav a:hover,
+.site-nav a:focus-visible {
+  border-bottom-color: var(--brick);
+}
+
+main {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 2.5rem 1.5rem 4rem;
+  position: relative;
+  z-index: 1;
+}
+
+.card {
+  background: var(--paper);
+  border: var(--pixel-border);
+  box-shadow: var(--shadow-hard);
+  padding: 1.5rem;
+  margin-bottom: 1.75rem;
+}
+
+.module-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 1.25rem;
+}
+
+.module-tile {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  text-decoration: none;
+  color: var(--ink);
+  background: var(--paper);
+  border: var(--pixel-border);
+  box-shadow: var(--shadow-hard);
+  padding: 1.25rem;
+  min-height: 9.5rem;
+  transition: transform 0.08s ease-out;
+}
+
+.module-tile:hover,
+.module-tile:focus-visible {
+  transform: translate(-2px, -2px);
+  box-shadow: 6px 6px 0 var(--ink);
+}
+
+.module-tile .lecture-no {
+  font-family: var(--font-display);
+  font-size: 0.7rem;
+  color: var(--brick);
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+.module-tile h3 {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.3;
+}
+
+.module-tile p {
+  margin: 0;
+  font-size: 0.85rem;
+  line-height: 1.45;
+}
+
+.btn {
+  display: inline-block;
+  font-family: var(--font-display);
+  font-size: 0.8rem;
+  background: var(--sun);
+  color: var(--ink);
+  border: var(--pixel-border);
+  box-shadow: var(--shadow-hard);
+  padding: 0.75rem 1.25rem;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.btn:hover,
+.btn:focus-visible {
+  transform: translate(-2px, -2px);
+  box-shadow: 6px 6px 0 var(--ink);
+}
+
+.btn:active {
+  transform: translate(2px, 2px);
+  box-shadow: 0 0 0 var(--ink);
+}
+
+.pixel-frame {
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+footer {
+  text-align: center;
+  font-size: 0.8rem;
+  padding: 1.5rem;
+  position: relative;
+  z-index: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .module-tile, .btn { transition: none; }
+}
+
+.connie-photo {
+  width: 100%;
+  max-width: 640px;
+  margin: 1.5rem auto;
+}
+
+.connie-photo img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 2px solid var(--ink);
+}
+
+.connie-photo figcaption {
+  margin-top: 0.5rem;
+  font-size: 0.85rem;
+  text-align: center;
+}

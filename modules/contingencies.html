@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Contingencies — Connie's Contingencies</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Public+Sans:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/style.css" />
+  <style>
+    :root { --connie-dark: #A85F27; }
+
+    #game-area {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1.25rem;
+    }
+
+    /* ---- meters ---- */
+    #meters {
+      width: 100%;
+      max-width: 480px;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+    #counts-row {
+      display: flex;
+      gap: 2rem;
+      font-size: 0.95rem;
+    }
+    #counts-row strong {
+      font-family: var(--font-display);
+      font-size: 0.85rem;
+      font-variant-numeric: tabular-nums;
+    }
+    .meter {
+      display: grid;
+      grid-template-columns: 40px 20px 1fr 34px;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .meter-label {
+      font-family: var(--font-display);
+      font-size: 0.65rem;
+    }
+    .meter-scale-tick {
+      font-size: 0.7rem;
+      color: #555;
+      text-align: center;
+    }
+    .meter-track {
+      height: 16px;
+      background: #fff;
+      border: 2px solid var(--ink);
+      position: relative;
+      overflow: hidden;
+    }
+    .meter-fill {
+      position: absolute;
+      inset: 0 auto 0 0;
+      width: 0%;
+      transition: width 0.25s ease-out;
+    }
+    #mystery-fill { background: #999; }
+
+    /* ---- scene ---- */
+    #scene {
+      width: 100%;
+      max-width: 480px;
+      height: 220px;
+      background: var(--sky);
+      border: var(--pixel-border);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+    }
+    #scene::before {
+      content: "";
+      position: absolute;
+      left: 0; right: 0; bottom: 0;
+      height: 30%;
+      background: var(--grass);
+    }
+    #dog-wrap {
+      position: relative;
+      width: 257px;
+      height: 140px;
+      margin-bottom: 20px;
+      transition: transform 0.08s ease-out;
+    }
+    #dog-wrap.bark-anim { transform: translateY(-8px); }
+    #dog-svg { width: 100%; height: 100%; display: block; }
+    #tail-group {
+      transform-box: fill-box;
+      transform-origin: 90% 50%;
+    }
+    #tail-group.wag-once {
+      animation: wagOnce 0.6s ease-in-out 1;
+    }
+    @keyframes wagOnce {
+      0%   { transform: rotate(0deg); }
+      25%  { transform: rotate(-16deg); }
+      50%  { transform: rotate(14deg); }
+      75%  { transform: rotate(-10deg); }
+      100% { transform: rotate(0deg); }
+    }
+
+    .bark-bubble, .cheese-pop {
+      position: absolute;
+      pointer-events: none;
+      font-family: var(--font-display);
+    }
+    .bark-bubble {
+      top: -6px;
+      left: 60%;
+      font-size: 0.85rem;
+      background: var(--paper);
+      border: 3px solid var(--ink);
+      padding: 4px 8px;
+      animation: bubble 0.5s ease-out forwards;
+    }
+    @keyframes bubble {
+      0%   { opacity: 0; transform: translateY(6px) scale(0.7); }
+      30%  { opacity: 1; transform: translateY(-4px) scale(1.05); }
+      100% { opacity: 0; transform: translateY(-14px) scale(1); }
+    }
+    .cheese-pop {
+      top: 10%;
+      left: 50%;
+      font-size: 2.4rem;
+      animation: cheesepop 1.1s ease-out forwards;
+    }
+    @keyframes cheesepop {
+      0%   { transform: translate(-50%, -30px) scale(0.5); opacity: 0; }
+      25%  { transform: translate(-50%, 10px) scale(1.15); opacity: 1; }
+      45%  { transform: translate(-50%, 0px) scale(1); opacity: 1; }
+      100% { transform: translate(-50%, 0px) scale(1); opacity: 0; }
+    }
+
+    #bark-btn {
+      font-size: 1.1rem;
+      padding: 1rem 2rem;
+    }
+    #bark-btn.pressed {
+      transform: translate(2px, 2px);
+      box-shadow: 0 0 0 var(--ink);
+    }
+    .hint { font-size: 0.85rem; color: #444; }
+
+    /* ---- results ---- */
+    #results { display: none; width: 100%; }
+    #results h2 { margin-bottom: 0.25rem; }
+    #results .chart-caption { font-size: 0.85rem; color: #444; margin: 0.25rem 0 1rem; }
+    #results svg { width: 100%; height: auto; background: #fff; border: 2px solid var(--ink); }
+    .rate-stat {
+      font-family: var(--font-display);
+      font-size: 1.4rem;
+      background: var(--paper);
+      border: var(--pixel-border);
+      box-shadow: var(--shadow-hard);
+      padding: 1.5rem;
+      text-align: center;
+    }
+    .rate-stat small {
+      display: block;
+      font-family: var(--font-body);
+      font-size: 0.85rem;
+      margin-top: 0.5rem;
+      font-weight: 400;
+    }
+    #discussion ol { padding-left: 1.25rem; }
+    #discussion li { margin-bottom: 0.75rem; }
+  </style>
+</head>
+<body>
+
+  <header class="site-header">
+    <a class="brand" href="../index.html">
+      <span class="brand-title">Connie's Contingencies</span>
+    </a>
+    <nav class="site-nav">
+      <a href="../index.html">Modules</a>
+      <a href="../connie.html">About Connie</a>
+      <span data-treats-counter-wrap>🦴 <span data-treats-counter>0</span></span>
+    </nav>
+  </header>
+
+  <main>
+    <section class="card">
+      <h1>Module 1: Contingencies</h1>
+      <p>
+        Connie loves cheese 🧀 more than almost anything. Press the Bark
+        button (or hit spacebar) to get her barking — see how much cheese
+        you can get her!
+      </p>
+    </section>
+
+    <section class="card" id="game-area">
+
+      <div id="meters">
+        <div id="counts-row">
+          <span>Barks: <strong id="barks-value">0</strong></span>
+          <span>Cheese: <strong id="cheese-value">0</strong></span>
+        </div>
+        <div class="meter">
+          <span class="meter-label">Hunger</span>
+          <span class="meter-scale-tick">0</span>
+          <div class="meter-track"><div class="meter-fill" id="mystery-fill"></div></div>
+          <span class="meter-scale-tick">100</span>
+        </div>
+      </div>
+
+      <div id="scene">
+        <div id="dog-wrap">
+          <svg id="dog-svg" viewBox="0 0 44 24" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">
+            <g id="tail-group">
+              <!-- tail base, merging into the back of the body -->
+              <rect x="4" y="10" width="5" height="6" fill="var(--ink)" />
+              <rect x="5" y="11" width="3" height="4" fill="var(--connie-dark)" />
+              <!-- curled tip, hooking upward -->
+              <rect x="3" y="6" width="5" height="5" fill="var(--ink)" />
+              <rect x="4" y="7" width="3" height="3" fill="var(--connie-dark)" />
+            </g>
+            <!-- body: dark "back" shade on top, lighter tan underside,
+                 rather than a white belly stripe -->
+            <rect x="8" y="9" width="24" height="9" fill="var(--ink)" />
+            <rect x="9" y="10" width="22" height="4" fill="var(--connie-dark)" />
+            <rect x="9" y="14" width="22" height="3" fill="var(--connie-tan)" />
+            <!-- short, rounded floppy ear, hanging only to about jaw
+                 level (not to the ground) — drawn before the skull so
+                 the skull overlaps its top edge -->
+            <rect x="28" y="7" width="5" height="8" fill="var(--ink)" />
+            <rect x="29" y="8" width="3" height="6" fill="var(--connie-dark)" />
+            <!-- skull: dark on top, a lighter tan muzzle patch low-front -->
+            <rect x="30" y="6" width="9" height="9" fill="var(--ink)" />
+            <rect x="31" y="7" width="5" height="7" fill="var(--connie-dark)" />
+            <rect x="34" y="10" width="4" height="4" fill="var(--connie-tan)" />
+            <!-- eye -->
+            <rect x="33" y="9" width="2" height="2" fill="var(--ink)" />
+            <!-- short snout — much shorter than the previous version -->
+            <rect x="38" y="10" width="5" height="4" fill="var(--ink)" />
+            <rect x="39" y="11" width="3" height="2" fill="var(--connie-tan)" />
+            <!-- nose -->
+            <rect x="41" y="11" width="2" height="2" fill="var(--ink)" />
+            <!-- legs: ink block with a tan fill leaving the bottom 2 units
+                 as a visible dark "paw" -->
+            <rect x="9" y="17" width="3" height="6" fill="var(--ink)" />
+            <rect x="9" y="17" width="3" height="4" fill="var(--connie-tan)" />
+            <rect x="14" y="17" width="3" height="6" fill="var(--ink)" />
+            <rect x="14" y="17" width="3" height="4" fill="var(--connie-tan)" />
+            <rect x="22" y="17" width="3" height="6" fill="var(--ink)" />
+            <rect x="22" y="17" width="3" height="4" fill="var(--connie-tan)" />
+            <rect x="27" y="17" width="3" height="6" fill="var(--ink)" />
+            <rect x="27" y="17" width="3" height="4" fill="var(--connie-tan)" />
+          </svg>
+        </div>
+      </div>
+
+      <button class="btn" id="bark-btn">BARK!</button>
+      <p class="hint">Spacebar works too.</p>
+
+    </section>
+
+    <section class="card" id="results">
+      <h1>What happened?</h1>
+
+      <h2>Cumulative record</h2>
+      <p class="chart-caption">Every bark, in order, over the whole session. Marks along the bottom show when cheese arrived (red) and when Connie's tail wagged in response (green).</p>
+      <div id="chart-cumulative"></div>
+
+      <h2>Session totals</h2>
+      <p class="chart-caption">Total barks, wags, and cheese deliveries across the whole session.</p>
+      <div id="chart-totals"></div>
+
+      <h2>Overall rate</h2>
+      <div class="rate-stat" id="rate-stat"></div>
+
+      <div id="discussion">
+        <h2>Discuss</h2>
+        <ol>
+          <li>What's your hypothesis for what contingency was present?</li>
+          <li>The bar was labelled "Hunger" — do you think that label was earned by what you saw, or just borrowed?</li>
+          <li>What do the graphs show, and how are they useful for testing your hypothesis?</li>
+          <li>Confer with those around you — what does their data show? How helpful is this in revealing a contingency?</li>
+          <li>How might you test your hypothesis by running the experiment again?</li>
+        </ol>
+      </div>
+
+      <p style="margin-top:1.5rem;">
+        <button class="btn" id="again-btn">Play again</button>
+      </p>
+    </section>
+  </main>
+
+  <footer>Built with Connie in mind. 🐾</footer>
+
+  <script src="../js/shared.js"></script>
+  <script>
+    /*
+     * Mechanic summary (see PROJECT-NOTES.md for the full rationale):
+     * - Barking is click-driven but NOT 1:1 — a hidden internal "state"
+     *   value (never shown numerically; shown ONLY as a bar labelled
+     *   "Hunger" — see PROJECT-NOTES.md for why that label is a deliberate
+     *   reveal device, not a real claim) sets how many clicks are needed
+     *   per bark. Higher state = fewer clicks needed.
+     * - Cheese delivery is on a variable-time schedule (mean ~10s, range
+     *   7-13s), completely independent of barking. This is the trap:
+     *   frequent barking makes cheese look contingent on barking when
+     *   it never is.
+     * - The hidden state rises for the first 3 cheese deliveries (a
+     *   small "sample of the reinforcer" bump), then decays afterward
+     *   as Connie gets progressively fuller. It only changes AT the
+     *   moment of each cheese delivery, not continuously over time.
+     * - A tail wag is a SEPARATE mechanic from barking, and is a GENUINE
+     *   contingency (unlike the bark/cheese relationship): every cheese
+     *   delivery is followed, after a short fixed delay, by exactly one
+     *   wag. This is deliberate — it gives the post-session data a real,
+     *   invariant relationship to contrast against the illusory-looking
+     *   bark/cheese one — shown only as green ticks on the cumulative
+     *   record and a green bar in the totals chart, not a chart of its own.
+     * - Session ends after DELIVERIES_TOTAL cheese deliveries, then two
+     *   views of the data are shown: a cumulative record (full detail,
+     *   time-ordered, marking cheese and wag moments) and a simple session
+     *   totals bar chart (barks/wags/cheese counts, no time axis at all).
+     *   `renderRate()` adds a third, single-number view. Note: the earlier
+     *   binned (per-30-seconds) chart and its Hunger overlay line were
+     *   REMOVED in favour of this simpler totals chart — `stateLog` is
+     *   still collected but currently has no consumer.
+     */
+
+    const DELIVERIES_TOTAL = 10;
+    const MIN_GAP_S = 7, MAX_GAP_S = 13; // mean ~10s
+    const STATE_FLOOR_TARGET = 15; // desired state value by the final delivery
+
+    let state = 75;              // hidden internal value, 0-100, never shown as a number
+    let clickAcc = 0;
+    let barkCount = 0;
+    let cheeseCount = 0;
+    let sessionStarted = false;
+    let sessionEnded = false;
+    let sessionStartMs = null;
+    let cheeseTimer = null;
+
+    const barkLog = [];   // seconds since session start
+    const cheeseLog = []; // seconds since session start
+    const stateLog = [];  // {t, state} — logged at each cheese delivery; currently unused now that the totals chart replaced the binned Hunger-overlay chart (kept in case that view comes back in some form)
+    const wagLog = [];    // seconds since session start — one entry per cheese delivery, always shortly AFTER the matching cheeseLog entry
+
+    const dogWrap = document.getElementById("dog-wrap");
+    const scene = document.getElementById("scene");
+    const barkBtn = document.getElementById("bark-btn");
+    const tailGroup = document.getElementById("tail-group");
+
+    // Convex: 4 clicks needed near state=100, ramping up sharply as state
+    // drops, reaching ~29 clicks near the state floor (~15). Deliberately
+    // steep at the low end — per lecturer feedback, changes in effort
+    // needed to produce a bark should become much more obvious as state
+    // falls, not a gentle linear slope.
+    function clicksNeeded(s) {
+      const clamped = Math.max(0, Math.min(100, s));
+      const clicks = 4 + 0.0035 * Math.pow(100 - clamped, 2);
+      return Math.round(clicks);
+    }
+
+    // State rises for the first 3 cheese deliveries (75→85→93→100), then
+    // decays with an ACCELERATING curve — small drops early, much bigger
+    // drops later. The decay constant is derived from DELIVERIES_TOTAL so
+    // it always reaches STATE_FLOOR_TARGET by the final delivery, however
+    // many deliveries there are — this used to be a hardcoded constant
+    // tuned for exactly 20 deliveries, which silently broke (barely any
+    // decay at all) when deliveries were reduced to 10. Don't hardcode a
+    // specific k again; if DELIVERIES_TOTAL changes, this recalibrates
+    // itself automatically.
+    const declineK = (100 - STATE_FLOOR_TARGET) / Math.pow(DELIVERIES_TOTAL - 3, 2);
+    function stateAfterDelivery(i) {
+      if (i === 1) return 85;
+      if (i === 2) return 93;
+      if (i === 3) return 100;
+      const x = i - 3;
+      return Math.max(5, 100 - declineK * x * x);
+    }
+
+    function elapsedSeconds() {
+      return (performance.now() - sessionStartMs) / 1000;
+    }
+
+    function updateMeters() {
+      document.getElementById("barks-value").textContent = barkCount;
+      document.getElementById("cheese-value").textContent = cheeseCount;
+      document.getElementById("mystery-fill").style.width = Math.round(state) + "%";
+    }
+    updateMeters();
+
+    function showBarkBubble() {
+      const b = document.createElement("div");
+      b.className = "bark-bubble";
+      b.textContent = "Woof!";
+      dogWrap.appendChild(b);
+      setTimeout(() => b.remove(), 500);
+    }
+
+    function showCheesePop() {
+      const c = document.createElement("div");
+      c.className = "cheese-pop";
+      c.textContent = "🧀";
+      scene.appendChild(c);
+      setTimeout(() => c.remove(), 1100);
+    }
+
+    const WAG_DELAY_MS = 350; // deliberately AFTER the cheese, never simultaneous
+    function doWag() {
+      wagLog.push(elapsedSeconds());
+      tailGroup.classList.remove("wag-once");
+      tailGroup.classList.add("wag-once");
+      setTimeout(() => tailGroup.classList.remove("wag-once"), 650);
+    }
+
+    // A filtered-noise-burst "woof" rather than a clean oscillator tone —
+    // still fully synthesized in-browser (no audio file, no copyright
+    // concern, consistent with this site's audio approach elsewhere), but
+    // shaped to sound like a short percussive bark rather than an
+    // electronic blip: a burst of noise run through a lowpass filter whose
+    // cutoff sweeps sharply downward, with a fast decay envelope.
+    function playBarkSound() {
+      const ctx = getAudioCtx();
+      const duration = 0.15;
+      const bufferSize = Math.floor(ctx.sampleRate * duration);
+      const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) {
+        const decay = Math.pow(1 - i / bufferSize, 2);
+        data[i] = (Math.random() * 2 - 1) * decay;
+      }
+
+      const noise = ctx.createBufferSource();
+      noise.buffer = buffer;
+
+      const filter = ctx.createBiquadFilter();
+      filter.type = "lowpass";
+      filter.Q.value = 3;
+      filter.frequency.setValueAtTime(1600, ctx.currentTime);
+      filter.frequency.exponentialRampToValueAtTime(220, ctx.currentTime + duration);
+
+      const gain = ctx.createGain();
+      gain.gain.setValueAtTime(0.5, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+
+      noise.connect(filter).connect(gain).connect(ctx.destination);
+      noise.start();
+      noise.stop(ctx.currentTime + duration);
+    }
+
+    function emitBark() {
+      barkCount++;
+      barkLog.push(elapsedSeconds());
+      updateMeters();
+      showBarkBubble();
+      dogWrap.classList.add("bark-anim");
+      setTimeout(() => dogWrap.classList.remove("bark-anim"), 120);
+      playBarkSound();
+    }
+
+    function scheduleNextCheese() {
+      const delayMs = (MIN_GAP_S + Math.random() * (MAX_GAP_S - MIN_GAP_S)) * 1000;
+      cheeseTimer = setTimeout(deliverCheese, delayMs);
+    }
+
+    function deliverCheese() {
+      cheeseCount++;
+      const t = elapsedSeconds();
+      cheeseLog.push(t);
+      state = stateAfterDelivery(cheeseCount);
+      stateLog.push({ t, state });
+      updateMeters();
+      showCheesePop();
+      setTimeout(doWag, WAG_DELAY_MS);
+      playMotif([[520, 90], [660, 90], [880, 140]], "triangle");
+      addTreats(1);
+
+      if (cheeseCount >= DELIVERIES_TOTAL) {
+        sessionEnded = true;
+        clearTimeout(cheeseTimer);
+        barkBtn.disabled = true;
+        // Wait until AFTER the final wag has actually fired (it's on its
+        // own WAG_DELAY_MS timer) before rendering results — otherwise
+        // wagLog is one entry short of cheeseLog at render time, and that
+        // one missing value turns every chart blank (see PROJECT-NOTES.md).
+        setTimeout(showResults, WAG_DELAY_MS + 50);
+      } else {
+        scheduleNextCheese();
+      }
+    }
+
+    function handleBarkInput() {
+      if (sessionEnded) return;
+
+      if (!sessionStarted) {
+        sessionStarted = true;
+        sessionStartMs = performance.now();
+        scheduleNextCheese();
+      }
+
+      clickAcc++;
+      if (clickAcc >= clicksNeeded(Math.round(state))) {
+        emitBark();
+        clickAcc = 0;
+      }
+    }
+
+    barkBtn.addEventListener("click", handleBarkInput);
+    document.addEventListener("keydown", (e) => {
+      if (e.code === "Space") {
+        e.preventDefault();
+        barkBtn.classList.add("pressed");
+        handleBarkInput();
+      }
+    });
+    document.addEventListener("keyup", (e) => {
+      if (e.code === "Space") barkBtn.classList.remove("pressed");
+    });
+
+    function showResults() {
+      const duration = cheeseLog[cheeseLog.length - 1];
+      renderCumulative(duration);
+      renderTotals();
+      renderRate(duration);
+
+      document.getElementById("results").style.display = "block";
+      document.getElementById("results").scrollIntoView({ behavior: "smooth" });
+    }
+
+    // ---- charts ----
+
+    function cumulativeAt(t) {
+      let n = 0;
+      for (const bt of barkLog) if (bt <= t) n++;
+      return n;
+    }
+
+    function renderCumulative(duration) {
+      const W = 600, H = 240, ML = 40, MR = 20, MT = 20, MB = 30;
+      const plotW = W - ML - MR, plotH = H - MT - MB;
+      const maxCount = Math.max(barkLog.length, 1);
+
+      const x = (t) => ML + (t / duration) * plotW;
+      const y = (c) => (H - MB) - (c / maxCount) * plotH;
+
+      let points = [`${x(0)},${y(0)}`];
+      let count = 0;
+      for (const t of barkLog) {
+        points.push(`${x(t)},${y(count)}`);
+        count++;
+        points.push(`${x(t)},${y(count)}`);
+      }
+      points.push(`${x(duration)},${y(count)}`);
+
+      const cheeseTicks = cheeseLog.map(t => {
+        const cx = x(t);
+        return `<line x1="${cx}" y1="${H - MB}" x2="${cx}" y2="${H - MB + 8}" stroke="var(--brick)" stroke-width="2" />
+                <circle cx="${cx}" cy="${y(cumulativeAt(t))}" r="3" fill="var(--brick)" />`;
+      }).join("");
+
+      const wagTicks = wagLog.map(t => {
+        const wx = x(t);
+        return `<line x1="${wx}" y1="${H - MB}" x2="${wx}" y2="${H - MB + 8}" stroke="var(--grass)" stroke-width="2" />`;
+      }).join("");
+
+      document.getElementById("chart-cumulative").innerHTML = `
+        <svg viewBox="0 0 ${W} ${H}">
+          <line x1="${ML}" y1="${MT}" x2="${ML}" y2="${H - MB}" stroke="var(--ink)" stroke-width="2" />
+          <line x1="${ML}" y1="${H - MB}" x2="${W - MR}" y2="${H - MB}" stroke="var(--ink)" stroke-width="2" />
+          <text x="${ML - 6}" y="${MT + 4}" font-size="10" text-anchor="end">${maxCount}</text>
+          <text x="${ML - 6}" y="${H - MB}" font-size="10" text-anchor="end">0</text>
+          <text x="${ML}" y="${H - MB + 20}" font-size="10">0s</text>
+          <text x="${W - MR}" y="${H - MB + 20}" font-size="10" text-anchor="end">${Math.round(duration)}s</text>
+          <polyline points="${points.join(" ")}" fill="none" stroke="var(--ink)" stroke-width="2" />
+          ${cheeseTicks}
+          ${wagTicks}
+        </svg>`;
+    }
+
+    function renderTotals() {
+      const W = 600, H = 240, ML = 40, MR = 20, MT = 20, MB = 30;
+      const plotW = W - ML - MR, plotH = H - MT - MB;
+      const totals = [
+        { label: "Barks",  value: barkCount,      color: "var(--brick)" },
+        { label: "Wags",   value: wagLog.length,  color: "var(--grass)" },
+        { label: "Cheese", value: cheeseCount,    color: "var(--sun)" }
+      ];
+      const maxCount = Math.max(...totals.map(t => t.value), 1);
+      const slot = plotW / totals.length;
+      const barW = slot * 0.5;
+
+      let bars = "";
+      totals.forEach((t, i) => {
+        const h = (t.value / maxCount) * plotH;
+        const bx = ML + i * slot + (slot - barW) / 2;
+        bars += `<rect x="${bx}" y="${H - MB - h}" width="${barW}" height="${h}" fill="${t.color}" />`;
+        bars += `<text x="${bx + barW / 2}" y="${H - MB - h - 8}" font-size="13" text-anchor="middle">${t.value}</text>`;
+        bars += `<text x="${bx + barW / 2}" y="${H - MB + 20}" font-size="11" text-anchor="middle">${t.label}</text>`;
+      });
+
+      document.getElementById("chart-totals").innerHTML = `
+        <svg viewBox="0 0 ${W} ${H}">
+          <line x1="${ML}" y1="${MT}" x2="${ML}" y2="${H - MB}" stroke="var(--ink)" stroke-width="2" />
+          <line x1="${ML}" y1="${H - MB}" x2="${W - MR}" y2="${H - MB}" stroke="var(--ink)" stroke-width="2" />
+          <text x="${ML - 6}" y="${MT + 4}" font-size="10" text-anchor="end">${maxCount}</text>
+          <text x="${ML - 6}" y="${H - MB}" font-size="10" text-anchor="end">0</text>
+          ${bars}
+        </svg>`;
+    }
+
+    function renderRate(duration) {
+      const minutes = duration / 60;
+      const rate = barkCount / minutes;
+      document.getElementById("rate-stat").innerHTML = `
+        ${rate.toFixed(1)} barks / minute
+        <small>${barkCount} barks over ${minutes.toFixed(1)} minutes, averaged into one number</small>`;
+    }
+
+    document.getElementById("again-btn").addEventListener("click", () => location.reload());
+  </script>
+</body>
+</html>

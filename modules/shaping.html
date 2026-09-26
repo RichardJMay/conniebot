@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Shaping — Connie's Contingencies</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Public+Sans:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/style.css" />
+  <style>
+    :root {
+      --connie-dark: #A85F27;
+      --cell: 46px;
+      --cols: 7;
+      --rows: 7;
+    }
+
+    #game-area {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1.25rem;
+    }
+
+    #stats {
+      font-family: var(--font-display);
+      font-size: 0.75rem;
+      display: flex;
+      gap: 1.5rem;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    #arena {
+      width: calc(var(--cell) * var(--cols));
+      height: calc(var(--cell) * var(--rows));
+      max-width: 100%;
+      background: var(--grass);
+      background-image: conic-gradient(
+        #4CB944 90deg, #45AE3E 90deg 180deg,
+        #4CB944 180deg 270deg, #45AE3E 270deg
+      );
+      background-size: calc(var(--cell) * 2) calc(var(--cell) * 2);
+      border: var(--pixel-border);
+      position: relative;
+      overflow: hidden;
+    }
+
+    #bowl {
+      position: absolute;
+      width: var(--cell);
+      height: var(--cell);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: calc(var(--cell) * 0.6);
+      user-select: none;
+    }
+
+    #dog-wrap {
+      position: absolute;
+      width: var(--cell);
+      height: var(--cell);
+      z-index: 3;
+    }
+    /* Flip only the SVG graphic, not #dog-wrap itself — the bark bubble is
+       a child of #dog-wrap, and if the wrapper were flipped instead, the
+       bubble's TEXT would mirror too (this was a real bug: "Woof!" was
+       rendering backwards whenever she faced left). */
+    #dog-svg.face-left { transform: scaleX(-1); }
+    #dog-svg { width: 100%; height: 100%; display: block; }
+
+    #tail-group {
+      transform-box: fill-box;
+      transform-origin: 90% 50%;
+    }
+    #tail-group.wag-once {
+      animation: wagOnce 0.6s ease-in-out 1;
+    }
+    @keyframes wagOnce {
+      0%   { transform: rotate(0deg); }
+      25%  { transform: rotate(-16deg); }
+      50%  { transform: rotate(14deg); }
+      75%  { transform: rotate(-10deg); }
+      100% { transform: rotate(0deg); }
+    }
+
+    .bark-bubble {
+      position: absolute;
+      top: -6px;
+      left: 60%;
+      pointer-events: none;
+      font-family: var(--font-display);
+      font-size: 0.7rem;
+      background: var(--paper);
+      border: 3px solid var(--ink);
+      padding: 3px 6px;
+      z-index: 5;
+      animation: bubble 0.5s ease-out forwards;
+      white-space: nowrap;
+    }
+    @keyframes bubble {
+      0%   { opacity: 0; transform: translateY(6px) scale(0.7); }
+      30%  { opacity: 1; transform: translateY(-4px) scale(1.05); }
+      100% { opacity: 0; transform: translateY(-14px) scale(1); }
+    }
+
+    .cheese-pop {
+      position: absolute;
+      width: var(--cell);
+      height: var(--cell);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+      font-size: calc(var(--cell) * 0.6);
+      z-index: 6;
+      animation: cheesepop 1.1s ease-out forwards;
+    }
+    @keyframes cheesepop {
+      0%   { transform: translateY(-20px) scale(0.5); opacity: 0; }
+      25%  { transform: translateY(8px) scale(1.15); opacity: 1; }
+      45%  { transform: translateY(0px) scale(1); opacity: 1; }
+      100% { transform: translateY(0px) scale(1); opacity: 0; }
+    }
+
+    #click-btn {
+      font-size: 1.1rem;
+      padding: 1rem 2rem;
+    }
+    #start-btn {
+      font-size: 1.1rem;
+      padding: 1rem 2rem;
+    }
+    #click-btn.pressed {
+      transform: translate(2px, 2px);
+      box-shadow: 0 0 0 var(--ink);
+    }
+    #click-btn:disabled { opacity: 0.5; }
+    .hint { font-size: 0.85rem; color: #444; }
+
+    #results { display: none; width: 100%; }
+    #results ol { padding-left: 1.25rem; }
+    #results li { margin-bottom: 0.75rem; }
+  </style>
+</head>
+<body>
+
+  <header class="site-header">
+    <a class="brand" href="../index.html">
+      <span class="brand-title">Connie's Contingencies</span>
+    </a>
+    <nav class="site-nav">
+      <a href="../index.html">Modules</a>
+      <a href="../connie.html">About Connie</a>
+      <span data-treats-counter-wrap>🦴 <span data-treats-counter>0</span></span>
+    </nav>
+  </header>
+
+  <main>
+    <section class="card">
+      <h1>Module: Shaping</h1>
+      <p>
+        Mmmm cheese 🧀 Connie will wander around on her own looking for a cheesy snack
+        Press <strong>Click</strong> (or spacebar) at a moment that she is on the right track
+        Timing is important though. Whatever you click on becomes part of her
+        route. 
+      </p>
+    </section>
+
+    <section class="card" id="game-area">
+      <div id="stats">
+        <span>Steps locked in: <span id="locked-count">1</span></span>
+        <span>Attempts: <span id="attempt-count">0</span></span>
+      </div>
+
+      <div id="arena">
+        <div id="bowl">🧀</div>
+        <div id="dog-wrap">
+          <svg id="dog-svg" viewBox="0 0 44 24" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">
+            <g id="tail-group">
+              <rect x="4" y="10" width="5" height="6" fill="var(--ink)" />
+              <rect x="5" y="11" width="3" height="4" fill="var(--connie-dark)" />
+              <rect x="3" y="6" width="5" height="5" fill="var(--ink)" />
+              <rect x="4" y="7" width="3" height="3" fill="var(--connie-dark)" />
+            </g>
+            <rect x="8" y="9" width="24" height="9" fill="var(--ink)" />
+            <rect x="9" y="10" width="22" height="4" fill="var(--connie-dark)" />
+            <rect x="9" y="14" width="22" height="3" fill="var(--connie-tan)" />
+            <rect x="28" y="7" width="5" height="8" fill="var(--ink)" />
+            <rect x="29" y="8" width="3" height="6" fill="var(--connie-dark)" />
+            <rect x="30" y="6" width="9" height="9" fill="var(--ink)" />
+            <rect x="31" y="7" width="5" height="7" fill="var(--connie-dark)" />
+            <rect x="34" y="10" width="4" height="4" fill="var(--connie-tan)" />
+            <rect x="33" y="9" width="2" height="2" fill="var(--ink)" />
+            <rect x="38" y="10" width="5" height="4" fill="var(--ink)" />
+            <rect x="39" y="11" width="3" height="2" fill="var(--connie-tan)" />
+            <rect x="41" y="11" width="2" height="2" fill="var(--ink)" />
+            <rect x="9" y="17" width="3" height="6" fill="var(--ink)" />
+            <rect x="9" y="17" width="3" height="4" fill="var(--connie-tan)" />
+            <rect x="14" y="17" width="3" height="6" fill="var(--ink)" />
+            <rect x="14" y="17" width="3" height="4" fill="var(--connie-tan)" />
+            <rect x="22" y="17" width="3" height="6" fill="var(--ink)" />
+            <rect x="22" y="17" width="3" height="4" fill="var(--connie-tan)" />
+            <rect x="27" y="17" width="3" height="6" fill="var(--ink)" />
+            <rect x="27" y="17" width="3" height="4" fill="var(--connie-tan)" />
+          </svg>
+        </div>
+      </div>
+
+      <button class="btn" id="start-btn">START</button>
+      <button class="btn" id="click-btn" style="display:none;">CLICK!</button>
+      <button class="btn" id="reset-btn">Reset</button>
+      <p class="hint">Spacebar works too. Click while she's in a square you want to keep.</p>
+    </section>
+
+    <section class="card" id="results">
+      <h1>She made it!</h1>
+      <p id="summary-text"></p>
+      <div id="discussion">
+        <h2>Discuss</h2>
+        <ol>
+         <li>What happened on a step where you were slow to click, why?</li>
+          <li>Describe the contingencies at play here</li>
+          <li>Functionally, what is a click in this demonstration? How do you know? </li>
+          <li>Propose an experiment to test your hypothesis -try it out!</li>
+          <li>Think about what is different in the simulation compared to shaping in real life </li>
+        </ol>
+      </div>
+      <p style="margin-top:1.5rem;">
+        <button class="btn" id="again-btn">Play again</button>
+      </p>
+    </section>
+  </main>
+
+  <footer>Built with Connie in mind. 🐾</footer>
+
+  <script src="../js/shared.js"></script>
+  <script>
+    /*
+     * Mechanic summary (see PROJECT-NOTES.md for the full rationale):
+     * - The game does not begin automatically — a Start button gates the
+     *   first `startSamplingCycle()` call. This isn't just UX polish: it
+     *   also guarantees a genuine user gesture has occurred before any
+     *   audio plays. Without it, an escalation bark could fire completely
+     *   autonomously (Connie wanders on her own) before the player had
+     *   ever interacted with the page — which browsers can silently block
+     *   under autoplay-audio restrictions. Don't remove the Start gate and
+     *   go back to auto-starting without re-solving this.
+     * - Connie moves autonomously — the player never directly controls her.
+     *   The player is purely the reinforcement source, clicking (or
+     *   spacebar) to mark a candidate square as "keep this."
+     * - From her current locked-in square (the "frontier"), she picks a
+     *   random adjacent square (8-directional, including diagonals) and
+     *   moves into it. A REINFORCE_WINDOW_MS window opens; if the player
+     *   clicks inside it, that square is locked in permanently and becomes
+     *   the new frontier. If not, she retreats to the frontier and tries a
+     *   different random adjacent square.
+     * - On every new lock-in, she returns to the START square and quickly
+     *   replays the ENTIRE locked-in sequence so far (fast — this is
+     *   "already learned" ground, not new territory) before resuming
+     *   random exploration from the new frontier.
+     * - If MOVES_BEFORE_ESCALATION attempts pass with no reinforcement,
+     *   she "escalates": movement speeds up and she starts barking
+     *   (reusing the exact bark sound/speech-bubble from the Contingencies
+     *   module) on every subsequent attempt, until she's finally
+     *   reinforced again, which resets escalation.
+     * - Reaching the target square ends the game IMMEDIATELY on arrival —
+     *   no click/reinforcement needed for that final square, no closing
+     *   replay flourish. The moment she steps onto it, cheese is delivered
+     *   (the only "cheese" moment in this module — the Click button plays
+     *   a separate, lighter marker tone, not the cheese jingle).
+     * - The player can reinforce a square that ISN'T progress toward the
+     *   bowl. Nothing prevents this on purpose — a bad reinforcement
+     *   choice just makes for a worse (or even non-terminating) route,
+     *   which is itself the lesson.
+     */
+
+    const ROWS = 7, COLS = 7;
+    const START = { row: 0, col: 0 };
+    const BOWL  = { row: 6, col: 6 };
+
+    const REINFORCE_WINDOW_MS = 500;   // constant — never shrinks, even when escalated
+    const MOVES_BEFORE_ESCALATION = 4;
+    const NORMAL_MOVE_MS = 220, ESCALATED_MOVE_MS = 100;
+    const NORMAL_PAUSE_MS = 150, ESCALATED_PAUSE_MS = 40;
+    const REPLAY_MOVE_MS = 90;         // always quick — replaying established ground
+
+    let frontier = { ...START };
+    let lockedSequence = [{ ...START }];
+    let movesSinceReinforcement = 0;
+    let escalated = false;
+    let awaitingReinforcement = false;
+    let candidateCell = null;
+    let reinforceTimer = null;
+    let attemptCount = 0;
+    let gameEnded = false;
+    let facing = 1; // 1 = facing right, -1 = facing left
+
+    const arena = document.getElementById("arena");
+    const dogWrap = document.getElementById("dog-wrap");
+    const dogSvg = document.getElementById("dog-svg");
+    const clickBtn = document.getElementById("click-btn");
+    const startBtn = document.getElementById("start-btn");
+    let gameStarted = false;
+
+    function cellPx(n) {
+      return n * parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--cell"));
+    }
+
+    function placeBowl() {
+      const bowl = document.getElementById("bowl");
+      bowl.style.left = cellPx(BOWL.col) + "px";
+      bowl.style.top = cellPx(BOWL.row) + "px";
+    }
+    placeBowl();
+
+    function moveConnieTo(cell, durationMs) {
+      const dc = cell.col - (moveConnieTo.lastCol ?? cell.col);
+      if (dc < 0) { facing = -1; dogSvg.classList.add("face-left"); }
+      if (dc > 0) { facing = 1; dogSvg.classList.remove("face-left"); }
+      moveConnieTo.lastCol = cell.col;
+
+      dogWrap.style.transition = `left ${durationMs}ms linear, top ${durationMs}ms linear`;
+      dogWrap.style.left = cellPx(cell.col) + "px";
+      dogWrap.style.top = cellPx(cell.row) + "px";
+    }
+    moveConnieTo(START, 0);
+
+    function showBark() {
+      playBarkSound();
+      const b = document.createElement("div");
+      b.className = "bark-bubble";
+      b.textContent = "Woof!";
+      dogWrap.appendChild(b);
+      setTimeout(() => b.remove(), 500);
+    }
+
+    // Duplicated from modules/contingencies.html rather than shared —
+    // see PROJECT-NOTES.md for the note on promoting this to shared.js
+    // now that two modules use it.
+    function playBarkSound() {
+      const ctx = getAudioCtx();
+      const duration = 0.15;
+      const bufferSize = Math.floor(ctx.sampleRate * duration);
+      const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) {
+        const decay = Math.pow(1 - i / bufferSize, 2);
+        data[i] = (Math.random() * 2 - 1) * decay;
+      }
+      const noise = ctx.createBufferSource();
+      noise.buffer = buffer;
+      const filter = ctx.createBiquadFilter();
+      filter.type = "lowpass";
+      filter.Q.value = 3;
+      filter.frequency.setValueAtTime(1600, ctx.currentTime);
+      filter.frequency.exponentialRampToValueAtTime(220, ctx.currentTime + duration);
+      const gain = ctx.createGain();
+      gain.gain.setValueAtTime(0.5, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+      noise.connect(filter).connect(gain).connect(ctx.destination);
+      noise.start();
+      noise.stop(ctx.currentTime + duration);
+    }
+
+    function showCheesePop() {
+      const c = document.createElement("div");
+      c.className = "cheese-pop";
+      c.textContent = "🧀";
+      c.style.left = cellPx(BOWL.col) + "px";
+      c.style.top = cellPx(BOWL.row) + "px";
+      arena.appendChild(c);
+      setTimeout(() => c.remove(), 1100);
+    }
+
+    function neighbors(cell) {
+      const out = [];
+      for (let dr = -1; dr <= 1; dr++) {
+        for (let dc = -1; dc <= 1; dc++) {
+          if (dr === 0 && dc === 0) continue;
+          const r = cell.row + dr, c = cell.col + dc;
+          if (r >= 0 && r < ROWS && c >= 0 && c < COLS) out.push({ row: r, col: c });
+        }
+      }
+      return out;
+    }
+
+    function updateStats() {
+      document.getElementById("locked-count").textContent = lockedSequence.length;
+      document.getElementById("attempt-count").textContent = attemptCount;
+    }
+
+    function startSamplingCycle() {
+      if (gameEnded) return;
+
+      const options = neighbors(frontier);
+      candidateCell = options[Math.floor(Math.random() * options.length)];
+      attemptCount++;
+      updateStats();
+
+      const moveMs = escalated ? ESCALATED_MOVE_MS : NORMAL_MOVE_MS;
+      moveConnieTo(candidateCell, moveMs);
+
+      setTimeout(() => {
+        if (gameEnded) return;
+
+        // Reaching the target ends the game immediately on arrival — no
+        // click/reinforcement needed for this final square.
+        if (candidateCell.row === BOWL.row && candidateCell.col === BOWL.col) {
+          lockedSequence.push(candidateCell);
+          frontier = candidateCell;
+          onReachedBowl();
+          return;
+        }
+
+        awaitingReinforcement = true;
+        if (escalated) showBark();
+        reinforceTimer = setTimeout(handleWindowExpired, REINFORCE_WINDOW_MS);
+      }, moveMs);
+    }
+
+    function handleWindowExpired() {
+      awaitingReinforcement = false;
+      const moveMs = escalated ? ESCALATED_MOVE_MS : NORMAL_MOVE_MS;
+      moveConnieTo(frontier, moveMs);
+
+      setTimeout(() => {
+        if (gameEnded) return;
+        movesSinceReinforcement++;
+        if (movesSinceReinforcement >= MOVES_BEFORE_ESCALATION) escalated = true;
+        const pauseMs = escalated ? ESCALATED_PAUSE_MS : NORMAL_PAUSE_MS;
+        setTimeout(startSamplingCycle, pauseMs);
+      }, moveMs);
+    }
+
+    function handleClickInput() {
+      if (gameEnded || !awaitingReinforcement) return;
+      clearTimeout(reinforceTimer);
+      awaitingReinforcement = false;
+      reinforceCell(candidateCell);
+    }
+
+    function reinforceCell(cell) {
+      lockedSequence.push(cell);
+      frontier = cell;
+      movesSinceReinforcement = 0;
+      escalated = false;
+      playChime(880, 80, "square"); // a marker click, distinct from the cheese jingle
+      updateStats();
+
+      wagTailOnce();
+      replayThenContinue();
+    }
+
+    function wagTailOnce() {
+      const tailGroup = document.getElementById("tail-group");
+      tailGroup.classList.remove("wag-once");
+      tailGroup.classList.add("wag-once");
+      setTimeout(() => tailGroup.classList.remove("wag-once"), 650);
+    }
+
+    function replayThenContinue() {
+      moveConnieTo(START, REPLAY_MOVE_MS);
+      let i = 0;
+      function step() {
+        if (i >= lockedSequence.length) {
+          // She's now visibly settled at the reinforced square — only
+          // start the next random walk after that, never in the same
+          // tick as the final replay move (that was a real bug: the next
+          // move used to begin before this one had finished animating,
+          // so she never looked like she'd actually returned).
+          startSamplingCycle();
+          return;
+        }
+        moveConnieTo(lockedSequence[i], REPLAY_MOVE_MS);
+        i++;
+        setTimeout(step, REPLAY_MOVE_MS);
+      }
+      setTimeout(step, REPLAY_MOVE_MS);
+    }
+
+    function onReachedBowl() {
+      gameEnded = true;
+      clickBtn.disabled = true;
+      showCheesePop();
+      playMotif([[520, 90], [660, 90], [880, 140]], "triangle");
+      addTreats(1);
+
+      const reinforcedSteps = lockedSequence.length - 1;
+      document.getElementById("summary-text").textContent =
+        `You shaped Connie to the cheese in ${reinforcedSteps} reinforced steps, ` +
+        `across ${attemptCount} attempts in total.`;
+
+      setTimeout(() => {
+        document.getElementById("results").style.display = "block";
+        document.getElementById("results").scrollIntoView({ behavior: "smooth" });
+      }, 900);
+    }
+
+    clickBtn.addEventListener("click", handleClickInput);
+    document.addEventListener("keydown", (e) => {
+      if (e.code === "Space") {
+        e.preventDefault();
+        clickBtn.classList.add("pressed");
+        handleClickInput();
+      }
+    });
+    document.addEventListener("keyup", (e) => {
+      if (e.code === "Space") clickBtn.classList.remove("pressed");
+    });
+
+    document.getElementById("again-btn").addEventListener("click", () => location.reload());
+    document.getElementById("reset-btn").addEventListener("click", () => location.reload());
+
+    startBtn.addEventListener("click", () => {
+      if (gameStarted) return;
+      gameStarted = true;
+      startBtn.style.display = "none";
+      clickBtn.style.display = "inline-block";
+      startSamplingCycle();
+    });
+  </script>
+</body>
+</html>
