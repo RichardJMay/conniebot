@@ -10,6 +10,13 @@
   <style>
     :root { --connie-dark: #A85F27; }
 
+    /* Fix mobile title overflow */
+    h1 {
+      word-wrap: break-word;
+      overflow-wrap: break-word;
+      hyphens: auto;
+    }
+
     #game-area {
       display: flex;
       flex-direction: column;
@@ -144,6 +151,10 @@
     #bark-btn {
       font-size: 1.1rem;
       padding: 1rem 2rem;
+      touch-action: manipulation; /* Prevents mobile double-tap zoom delay and zoom bugs */
+    }
+    .btn {
+      touch-action: manipulation; /* Applies to all buttons globally */
     }
     #bark-btn.pressed {
       transform: translate(2px, 2px);
@@ -217,36 +228,23 @@
         <div id="dog-wrap">
           <svg id="dog-svg" viewBox="0 0 44 24" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">
             <g id="tail-group">
-              <!-- tail base, merging into the back of the body -->
               <rect x="4" y="10" width="5" height="6" fill="var(--ink)" />
               <rect x="5" y="11" width="3" height="4" fill="var(--connie-dark)" />
-              <!-- curled tip, hooking upward -->
               <rect x="3" y="6" width="5" height="5" fill="var(--ink)" />
               <rect x="4" y="7" width="3" height="3" fill="var(--connie-dark)" />
             </g>
-            <!-- body: dark "back" shade on top, lighter tan underside,
-                 rather than a white belly stripe -->
             <rect x="8" y="9" width="24" height="9" fill="var(--ink)" />
             <rect x="9" y="10" width="22" height="4" fill="var(--connie-dark)" />
             <rect x="9" y="14" width="22" height="3" fill="var(--connie-tan)" />
-            <!-- short, rounded floppy ear, hanging only to about jaw
-                 level (not to the ground) — drawn before the skull so
-                 the skull overlaps its top edge -->
             <rect x="28" y="7" width="5" height="8" fill="var(--ink)" />
             <rect x="29" y="8" width="3" height="6" fill="var(--connie-dark)" />
-            <!-- skull: dark on top, a lighter tan muzzle patch low-front -->
             <rect x="30" y="6" width="9" height="9" fill="var(--ink)" />
             <rect x="31" y="7" width="5" height="7" fill="var(--connie-dark)" />
             <rect x="34" y="10" width="4" height="4" fill="var(--connie-tan)" />
-            <!-- eye -->
             <rect x="33" y="9" width="2" height="2" fill="var(--ink)" />
-            <!-- short snout — much shorter than the previous version -->
             <rect x="38" y="10" width="5" height="4" fill="var(--ink)" />
             <rect x="39" y="11" width="3" height="2" fill="var(--connie-tan)" />
-            <!-- nose -->
             <rect x="41" y="11" width="2" height="2" fill="var(--ink)" />
-            <!-- legs: ink block with a tan fill leaving the bottom 2 units
-                 as a visible dark "paw" -->
             <rect x="9" y="17" width="3" height="6" fill="var(--ink)" />
             <rect x="9" y="17" width="3" height="4" fill="var(--connie-tan)" />
             <rect x="14" y="17" width="3" height="6" fill="var(--ink)" />
@@ -300,43 +298,10 @@
 
   <script src="../js/shared.js"></script>
   <script>
-    /*
-     * Mechanic summary (see PROJECT-NOTES.md for the full rationale):
-     * - Barking is click-driven but NOT 1:1 — a hidden internal "state"
-     *   value (never shown numerically; shown ONLY as a bar labelled
-     *   "Hunger" — see PROJECT-NOTES.md for why that label is a deliberate
-     *   reveal device, not a real claim) sets how many clicks are needed
-     *   per bark. Higher state = fewer clicks needed.
-     * - Cheese delivery is on a variable-time schedule (mean ~10s, range
-     *   7-13s), completely independent of barking. This is the trap:
-     *   frequent barking makes cheese look contingent on barking when
-     *   it never is.
-     * - The hidden state rises for the first 3 cheese deliveries (a
-     *   small "sample of the reinforcer" bump), then decays afterward
-     *   as Connie gets progressively fuller. It only changes AT the
-     *   moment of each cheese delivery, not continuously over time.
-     * - A tail wag is a SEPARATE mechanic from barking, and is a GENUINE
-     *   contingency (unlike the bark/cheese relationship): every cheese
-     *   delivery is followed, after a short fixed delay, by exactly one
-     *   wag. This is deliberate — it gives the post-session data a real,
-     *   invariant relationship to contrast against the illusory-looking
-     *   bark/cheese one — shown only as green ticks on the cumulative
-     *   record and a green bar in the totals chart, not a chart of its own.
-     * - Session ends after DELIVERIES_TOTAL cheese deliveries, then two
-     *   views of the data are shown: a cumulative record (full detail,
-     *   time-ordered, marking cheese and wag moments) and a simple session
-     *   totals bar chart (barks/wags/cheese counts, no time axis at all).
-     *   `renderRate()` adds a third, single-number view. Note: the earlier
-     *   binned (per-30-seconds) chart and its Hunger overlay line were
-     *   REMOVED in favour of this simpler totals chart — `stateLog` is
-     *   still collected but currently has no consumer.
-     */
-
     const DELIVERIES_TOTAL = 10;
-    const MIN_GAP_S = 7, MAX_GAP_S = 13; // mean ~10s
-    const STATE_FLOOR_TARGET = 15; // desired state value by the final delivery
+    const MIN_GAP_S = 7, MAX_GAP_S = 13; 
 
-    let state = 75;              // hidden internal value, 0-100, never shown as a number
+    let state = 75;              
     let clickAcc = 0;
     let barkCount = 0;
     let cheeseCount = 0;
@@ -345,36 +310,23 @@
     let sessionStartMs = null;
     let cheeseTimer = null;
 
-    const barkLog = [];   // seconds since session start
-    const cheeseLog = []; // seconds since session start
-    const stateLog = [];  // {t, state} — logged at each cheese delivery; currently unused now that the totals chart replaced the binned Hunger-overlay chart (kept in case that view comes back in some form)
-    const wagLog = [];    // seconds since session start — one entry per cheese delivery, always shortly AFTER the matching cheeseLog entry
+    const barkLog = [];   
+    const cheeseLog = []; 
+    const stateLog = [];  
+    const wagLog = [];    
 
     const dogWrap = document.getElementById("dog-wrap");
     const scene = document.getElementById("scene");
     const barkBtn = document.getElementById("bark-btn");
     const tailGroup = document.getElementById("tail-group");
 
-    // Convex: 4 clicks needed near state=100, ramping up sharply as state
-    // drops, reaching ~29 clicks near the state floor (~15). Deliberately
-    // steep at the low end — per lecturer feedback, changes in effort
-    // needed to produce a bark should become much more obvious as state
-    // falls, not a gentle linear slope.
     function clicksNeeded(s) {
       const clamped = Math.max(0, Math.min(100, s));
       const clicks = 4 + 0.0035 * Math.pow(100 - clamped, 2);
       return Math.round(clicks);
     }
 
-    // State rises for the first 3 cheese deliveries (75→85→93→100), then
-    // decays with an ACCELERATING curve — small drops early, much bigger
-    // drops later. The decay constant is derived from DELIVERIES_TOTAL so
-    // it always reaches STATE_FLOOR_TARGET by the final delivery, however
-    // many deliveries there are — this used to be a hardcoded constant
-    // tuned for exactly 20 deliveries, which silently broke (barely any
-    // decay at all) when deliveries were reduced to 10. Don't hardcode a
-    // specific k again; if DELIVERIES_TOTAL changes, this recalibrates
-    // itself automatically.
+    const STATE_FLOOR_TARGET = 15;
     const declineK = (100 - STATE_FLOOR_TARGET) / Math.pow(DELIVERIES_TOTAL - 3, 2);
     function stateAfterDelivery(i) {
       if (i === 1) return 85;
@@ -411,7 +363,7 @@
       setTimeout(() => c.remove(), 1100);
     }
 
-    const WAG_DELAY_MS = 350; // deliberately AFTER the cheese, never simultaneous
+    const WAG_DELAY_MS = 350; 
     function doWag() {
       wagLog.push(elapsedSeconds());
       tailGroup.classList.remove("wag-once");
@@ -419,12 +371,6 @@
       setTimeout(() => tailGroup.classList.remove("wag-once"), 650);
     }
 
-    // A filtered-noise-burst "woof" rather than a clean oscillator tone —
-    // still fully synthesized in-browser (no audio file, no copyright
-    // concern, consistent with this site's audio approach elsewhere), but
-    // shaped to sound like a short percussive bark rather than an
-    // electronic blip: a burst of noise run through a lowpass filter whose
-    // cutoff sweeps sharply downward, with a fast decay envelope.
     function playBarkSound() {
       const ctx = getAudioCtx();
       const duration = 0.15;
@@ -485,10 +431,6 @@
         sessionEnded = true;
         clearTimeout(cheeseTimer);
         barkBtn.disabled = true;
-        // Wait until AFTER the final wag has actually fired (it's on its
-        // own WAG_DELAY_MS timer) before rendering results — otherwise
-        // wagLog is one entry short of cheeseLog at render time, and that
-        // one missing value turns every chart blank (see PROJECT-NOTES.md).
         setTimeout(showResults, WAG_DELAY_MS + 50);
       } else {
         scheduleNextCheese();
@@ -532,8 +474,6 @@
       document.getElementById("results").style.display = "block";
       document.getElementById("results").scrollIntoView({ behavior: "smooth" });
     }
-
-    // ---- charts ----
 
     function cumulativeAt(t) {
       let n = 0;
